@@ -26,6 +26,7 @@ class object:
             self.state[k+1] = self.param[k] * self.state[k] + w_k
         self.output[k] = self.state[k] + v_k
         self.t += self.ts
+        return k
 
     def plot(self):
         T = np.linspace(0., self.t, self.n)
@@ -34,10 +35,14 @@ class object:
         plt.legend()
         plt.grid()
 
-    def __str__(self):
-        time = self.t-self.ts
-        x = self.state[int(time/self.ts)]
-        y = self.output[int(time/self.ts)]
+    def __str__(self, k: int = None):
+        if k is None:
+            k = int((self.t-self.ts)/self.ts)
+            time = self.t-self.ts
+        else:
+            time = self.ts * k
+        x = self.state[k]
+        y = self.output[k]
         return f'{round(time,3):4.3} -> Stan: {x:8.3}\t Wyjscie: {y:8.3}'
 
     def rand_param(self):
