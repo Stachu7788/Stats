@@ -1,8 +1,7 @@
 from obiekt import object
 
-ob = object()
-for i in range(ob.n):
-    ob.step()
-    print(ob)
+a = 100 * [.8]
+ob = object(a, 0.1, 20)
+ob.simulate()
 ob.plot()
 
