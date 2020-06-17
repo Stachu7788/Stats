@@ -13,7 +13,6 @@ class object:
             self.n = len(param)
             self.param = param
         self.state = np.zeros([self.n]).tolist()
-        self.state[0] = np.random.normal()
         self.output = np.zeros([self.n]).tolist()
         self.ts = ts
         self.tf = ts * self.n
