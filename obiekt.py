@@ -16,7 +16,7 @@ class object:
         self.output = np.zeros([self.n]).tolist()
         self.ts = ts
         self.tf = ts * self.n
-        self.k = 0
+        self.k = 1
 
     def step(self):
         k = self.k
