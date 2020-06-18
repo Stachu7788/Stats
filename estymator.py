@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.stats as stat
 from obiekt import object
 
 
@@ -12,6 +13,7 @@ class estimator(object):
         x = np.array(self.state[:k+1])      # n, 1
         y = np.array(self.output[:k+1])     # n, 1
         a = np.array(self.est[:k])          # n-1, 1
+        
 
 
 def matrix_A(a, k):
@@ -30,6 +32,16 @@ def matrix_I(k):
     return I_
 
 
-# c = np.array([0.8**n for n in range(0, k)]).reshape([k, 1])
-A = matrix_A(0.8, 7)
-I_ = matrix_I(7)
+def pa(a):
+    return 0.9 if a == 0.8 else 0.1
+
+
+def normal_dist(y, a, k):
+    A = matrix_A(a, k)
+    A8 = matrix_A(0.8, k)
+    A9 = matrix_A(0.9, k)
+    I_ = matrix_I(k)
+    pay = ((stat.multivariate_normal.pdf(y, 0, A @ A.T + I_) * pa(a)) /
+           (pa(0.8) * stat.multivariate_normal.pdf(y, 0, A8 @ A8.T + I_) +
+            pa(0.9) * stat.multivariate_normal.pdf(y, 0, A9 @ A9.T + I_)))
+    return pay
