@@ -25,5 +25,11 @@ def matrix_A(a, k):
     return A
 
 
+def matrix_I(k):
+    I_ = np.diag(k * [1.])
+    return I_
+
+
 # c = np.array([0.8**n for n in range(0, k)]).reshape([k, 1])
 A = matrix_A(0.8, 7)
+I_ = matrix_I(7)
