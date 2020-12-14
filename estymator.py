@@ -1,47 +1,49 @@
 import numpy as np
-import scipy.stats as stat
-from obiekt import object
+from typing import Dict
 
 
-class estimator(object):
-    def __init__(self, *args):
-        object.__init__(self, *args)
-        self.est = np.zeros([self.n]).tolist()
+class Estimator:
+    def __init__(self, p0: Dict[float, float], y: np.array):
+        """
+        Inicjalizacja parametrów:
+            p0 : rozkład a priori
+            y  : pomiary
+        """
+        self.p = p0
+        self.y = y
 
-    def step(self):
-        k = object.step()
-        x = np.array(self.state[:k+1])      # n, 1
-        y = np.array(self.output[:k+1])     # n, 1
-        a = np.array(self.est[:k])          # n-1, 1
-        
+    def estimate(self):
+        # Rozmiar wektora pomiarów
+        y_size = np.size(self.y)
+
+        # Macierz wykładników A
+        apow = np.ones((y_size, y_size))
+        apow[np.triu_indices(y_size, 0)] = 0
+        apow = np.cumsum(apow, axis=0)
+
+        # Macierz A dla a=0.8
+        A = {0.8: 0.8 * np.ones((y_size, y_size))}
+        A[0.8] = np.power(A[0.8], apow)
+        A[0.8][np.triu_indices(y_size, 1)] = 0
+
+        # Macierz A dla a=0.9
+        A[0.9] = 0.9 * np.ones((y_size, y_size))
+        A[0.9] = np.power(A[0.9], apow)
+        A[0.9][np.triu_indices(y_size, 1)] = 0
+
+        # P(a=0.8|X)
+        p = {0.8: self.p[0.8] * normDist(self.y, 0, A[0.8]@A[0.8].T)}
+        p[0.8] = p[0.8] / (self.p[0.9] * normDist(self.y, 0, A[0.9]@A[0.9].T) + self.p[0.8] * normDist(self.y, 0, A[0.8]@A[0.8].T))
+        p[0.8] = np.float(p[0.8])
+
+        # P(a=0.9|X)
+        p[0.9] = self.p[0.9] * normDist(self.y, 0, A[0.9]@A[0.9].T)
+        p[0.9] = p[0.9] / (self.p[0.9] * normDist(self.y, 0, A[0.9]@A[0.9].T) + self.p[0.8] * normDist(self.y, 0, A[0.8]@A[0.8].T))
+        p[0.9] = np.float(p[0.9])
+
+        return p
 
 
-def matrix_A(a, k):
-    A = np.ones([k, k])
-    A = np.tril(A)
-    b = np.array([1. for i in range(k)]).reshape([k, 1])
-    for i in range(1, k):
-        A = np.concatenate((b, A), axis=1)
-        np.fill_diagonal(A, a**i)
-    A = A[:, k-1:]
-    return A
-
-
-def matrix_I(k):
-    I_ = np.diag(k * [1.])
-    return I_
-
-
-def pa(a):
-    return 0.9 if a == 0.8 else 0.1
-
-
-def normal_dist(y, a, k):
-    A = matrix_A(a, k)
-    A8 = matrix_A(0.8, k)
-    A9 = matrix_A(0.9, k)
-    I_ = matrix_I(k)
-    pay = ((stat.multivariate_normal.pdf(y, 0, A @ A.T + I_) * pa(a)) /
-           (pa(0.8) * stat.multivariate_normal.pdf(y, 0, A8 @ A8.T + I_) +
-            pa(0.9) * stat.multivariate_normal.pdf(y, 0, A9 @ A9.T + I_)))
-    return pay
+def normDist(y: np.ndarray, mi: np.ndarray, cov: np.ndarray):
+     return (1 / np.sqrt(np.linalg.det(cov)) *
+             np.exp(- 0.5 * np.transpose(y-mi) @ np.linalg.inv(cov) @ (y-mi)))
